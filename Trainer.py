@@ -89,7 +89,7 @@ class Trainer(object):
             print("CPU")
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-5)
 
         for epoch in range(self.epoch):
             print("Epoch:", epoch)
@@ -124,6 +124,10 @@ class Trainer(object):
                     loss = criterion(pred, y)
                     loss_valid += loss.item()
             print("Validation loss per batch: ", loss_valid/self.valid_batch_count)
+
+            checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
+            torch.save(checkpoint, '/home/goktug/projects/tracking_predictor/model_save/Epoch-' + str(epoch) + '-Checkpoint.pth')
+            print("Model is saved.")
             print("*********************************************************************")
 
 
@@ -133,9 +137,9 @@ if __name__ == "__main__":
                       output_timestamp_length=10,
                       ratio_train_set=0.7,
                       ratio_valid_set=0.15,
-                      batch_size_train=24,
+                      batch_size_train=48,
                       batch_size_valid=24,
                       batch_size_test=32)
     trainer.Train(use_gpu=True,
-                  lstm_output_feature_size=500,
-                  num_lstm_layer=32)
+                  lstm_output_feature_size=100,
+                  num_lstm_layer=3)
