@@ -18,6 +18,8 @@ class Seq2SeqModel(nn.Module):
         # LSTM
         self.lstm = nn.LSTM(input_dim, lstm_output_feature_size, num_lstm_layers, batch_first=True)
 
+        self.bn1 = nn.BatchNorm1d(num_features=20)
+
         # Readout layer
         self.fc = nn.Linear(lstm_output_feature_size, output_dim)
 
@@ -35,6 +37,9 @@ class Seq2SeqModel(nn.Module):
         #print("LSTM input shape:", x.shape)
         out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
         #print("LSTM output shape: ", out.shape)
+
+        out = self.bn1(out)
+
 
         # Index hidden state of last time step
         # out.size() --> batch_size, seq_length, lstm_output_feature_size
