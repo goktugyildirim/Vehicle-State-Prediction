@@ -1,6 +1,7 @@
 from DataLoader import DataLoader
 from Model import Seq2SeqModel
 import torch
+import matplotlib.pyplot as plt
 
 
 class Trainer(object):
@@ -89,13 +90,13 @@ class Trainer(object):
             print("CPU")
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-5)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
         for epoch in range(self.epoch):
             print("Epoch:", epoch)
             loss_training = 0
             for batch_id in range(len(self.train_loader)):
-                #print("Batch id:", batch_id)
+                # print("Batch id:", batch_id)
                 x, y = self.train_loader[batch_id]
                 x, y = x.float(), y.float()
                 if use_gpu:
@@ -108,8 +109,8 @@ class Trainer(object):
                 loss.backward()
                 optimizer.step()
                 loss_training += loss.item()
-                #print("Loss: ", loss)
-            print("Training loss per batch: ", loss_training/self.train_batch_count)
+                # print("Loss: ", loss)
+            print("Training loss per batch: ", loss_training / self.train_batch_count)
 
             loss_valid = 0
             for batch_id in range(len(self.validation_loader)):
@@ -119,15 +120,20 @@ class Trainer(object):
                     if torch.cuda.is_available():
                         x, y = x.to(device), y.to(device)
                 with torch.no_grad():
-                    #model.eval() ahah it doesn't work with GPU, but it is fast enough with no grad :)
+                    # model.eval() ahah it doesn't work with GPU, but it is fast enough with no grad :)
                     pred = model(x)
                     loss = criterion(pred, y)
                     loss_valid += loss.item()
-            print("Validation loss per batch: ", loss_valid/self.valid_batch_count)
+            print("Validation loss per batch: ", loss_valid / self.valid_batch_count)
 
-            checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
-            torch.save(checkpoint, '/home/goktug/projects/tracking_predictor/model_save/Epoch-' + str(epoch) + '-Checkpoint.pth')
-            print("Model is saved.")
+            plt.scatter(epoch, loss_valid)
+            plt.pause(0.05)
+
+            if epoch % 10 == 0:
+                checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
+                torch.save(checkpoint, '/home/goktug/projects/tracking_predictor/model_save/Epoch-' + str(
+                    epoch) + '-Checkpoint.pth')
+                print("Model is saved.")
             print("*********************************************************************")
 
 
@@ -137,9 +143,10 @@ if __name__ == "__main__":
                       output_timestamp_length=10,
                       ratio_train_set=0.7,
                       ratio_valid_set=0.15,
-                      batch_size_train=48,
-                      batch_size_valid=24,
-                      batch_size_test=32)
+                      batch_size_train=8192,
+                      batch_size_valid=8192,
+                      batch_size_test=8192,
+                      epoch=100000)
     trainer.Train(use_gpu=True,
                   lstm_output_feature_size=100,
                   num_lstm_layer=3)
